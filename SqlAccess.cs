@@ -99,5 +99,20 @@ namespace PhoneBook
                 return contact.Name;
             }
         }
+
+        public static void Search(string searchTerm)
+        {
+            using (var db = new PhoneBookContext())
+            {
+                db.Database.EnsureCreated();
+                var contacts = db.Contacts
+                    .OrderBy(contact => contact.Name)
+                    .ToList();
+
+                var suggestedContacts = Helpers.GetSuggestions(searchTerm, contacts);
+
+                Helpers.DisplayContactsAsTable(suggestedContacts, new List<string> { "Id", "Name", "Phone" });
+            }
+        }
     }
 }

@@ -19,7 +19,7 @@
 
                 else if (string.IsNullOrWhiteSpace(command)) continue;
 
-                else if (command.StartsWith("show "))
+                else if (command.StartsWith("show"))
                 {
                     SqlAccess.Read(command.Contains("sort-descending"));
                 }
@@ -42,6 +42,11 @@
                 {
                     string name = SqlAccess.Delete(rawCommand.Replace("remove", "").Trim());
                     Console.WriteLine($"Successfully removed {name}!");
+                }
+
+                else if(command.StartsWith("search "))
+                {
+                    SqlAccess.Search(rawCommand.Replace("search", "").Trim());
                 }
 
                 else

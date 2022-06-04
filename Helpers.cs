@@ -12,6 +12,7 @@ namespace PhoneBook
  * show [optional: sort-descending]: display all contacts
  * add [name] [phone number]: create a new contact
  * update [id] [new name or new number]: edit an existing contact
+ * search [search term]: search in your phonebook
  * remove [id or name]: delete a contact
 ";
 
@@ -94,6 +95,22 @@ namespace PhoneBook
             }
 
             return maxPercentage > 40 ? $"Did you mean {correctDefinition}?" : "";
+        }
+
+        public static List<Contact> GetSuggestions(string searchTerm, List<Contact> contacts)
+        {
+            var suggestedContacts = new List<Contact>();
+
+            foreach (var contact in contacts)
+            {
+                int matchPercentage = FuzzySharp.Fuzz.PartialRatio(searchTerm, contact.Name);
+                if (matchPercentage > 40)
+                {
+                    suggestedContacts.Add(contact);
+                }
+            }
+
+            return suggestedContacts;
         }
     }
 }
