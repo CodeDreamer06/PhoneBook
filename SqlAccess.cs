@@ -49,7 +49,7 @@ namespace PhoneBook
             }
         }
 
-        public static void Update(int id, string contactProperty)
+        public static dynamic Update(int id, string contactProperty)
         {
             using (var db = new PhoneBookContext())
             {
@@ -60,21 +60,26 @@ namespace PhoneBook
                     .Where(contact => contact.Id == id).First();
 
                 var (isNumber, phoneNumber) = Helpers.IsNumber(contactProperty);
+                dynamic changedProperty;
 
                 if (isNumber)
                 {
+                    changedProperty = contact.PhoneNumber;
                     contact.PhoneNumber = phoneNumber;
                 }
                 else
                 {
+                    changedProperty = contact.Name;
                     contact.Name = contactProperty;
                 }
 
                 db.SaveChanges();
+
+                return changedProperty;
             }
         }
 
-        public static void Delete(string contactProperty)
+        public static string Delete(string contactProperty)
         {
             using (var db = new PhoneBookContext())
             {
@@ -90,6 +95,8 @@ namespace PhoneBook
                 db.Remove(contact);
 
                 db.SaveChanges();
+
+                return contact.Name;
             }
         }
     }

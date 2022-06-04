@@ -9,7 +9,7 @@ namespace PhoneBook
 # Welcome to PhoneBook!
   A simple phone number manager to remember the phone numbers of your friends and other people!
  * exit or 0: stop the program
- * show [optional: sort-decending]: display all contacts
+ * show [optional: sort-descending]: display all contacts
  * add [name] [phone number]: create a new contact
  * update [id] [new name or new number]: edit an existing contact
  * remove [id or name]: delete a contact
@@ -68,6 +68,12 @@ namespace PhoneBook
             bool isNum = long.TryParse(Convert.ToString(Expression), NumberStyles.Any, NumberFormatInfo.InvariantInfo, out number);
 
             return (isNum, number);
+        }
+
+        public static (string, string) SplitString(string inputString)
+        {
+            var outputString = inputString.Trim().Split();
+            return (outputString[1], outputString[2]);
         }
     }
 }
