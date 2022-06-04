@@ -23,22 +23,36 @@ namespace PhoneBook
                 return;
             }
 
-            int longestNameLength = contacts.Max(contact => contact.Name.Length) + 18;
-            string border = new String('-', longestNameLength);
+            int longestNameLength = contacts.Max(contact => contact.Name.Length);
+            string border = new String('-', longestNameLength + 19);
 
             Console.WriteLine(border);
 
-            foreach (String header in headers) Console.Write(header + " | ");
+            foreach (String header in headers)
+            {
+                int headerPadLength = header == "Name" ? longestNameLength - 1 : header == "Phone" ? 10 : 0;
+                Console.Write(header.PadRight(headerPadLength) + " | ");
+            }
 
             Console.WriteLine();
 
+            Console.WriteLine(border);
+
             for (int i = 0; i < contacts.Count(); i++)
             {
-                Console.WriteLine(border);
-
                 foreach (PropertyInfo contact in contacts[i].GetType().GetProperties())
                 {
-                    Console.Write(contact.GetValue(contacts[i], null) + " | ");
+                    var tableItem = contact.GetValue(contacts[i], null);
+
+                    if(tableItem!.GetType() == typeof(string))
+                    {
+                        Console.Write(tableItem.ToString()!.PadRight(longestNameLength) + " | ");
+                    }
+
+                    else
+                    {
+                        Console.Write(tableItem + " | ");
+                    }
                 }
 
                 Console.WriteLine();
