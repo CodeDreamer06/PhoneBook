@@ -34,7 +34,7 @@ namespace PhoneBook
             }
         }
 
-        public static void Read()
+        public static void Read(bool sortByDescendingOrder = false)
         {
             using (var db = new PhoneBookContext())
             {
@@ -43,7 +43,53 @@ namespace PhoneBook
                     .OrderBy(contact => contact.Name)
                     .ToList();
 
+                if (sortByDescendingOrder) contacts.Reverse();
+
                 Helpers.DisplayContactsAsTable(contacts, new List<string> { "Id", "Name", "Phone Number" });
+            }
+        }
+
+        public static void Update(int id, string contactProperty)
+        {
+            using (var db = new PhoneBookContext())
+            {
+                db.Database.EnsureCreated();
+
+                var contact = db.Contacts
+                    .OrderBy(contact => contact.Name)
+                    .Where(contact => contact.Id == id).First();
+
+                var (isNumber, phoneNumber) = Helpers.IsNumber(contactProperty);
+
+                if (isNumber)
+                {
+                    contact.PhoneNumber = phoneNumber;
+                }
+                else
+                {
+                    contact.Name = contactProperty;
+                }
+
+                db.SaveChanges();
+            }
+        }
+
+        public static void Delete(string contactProperty)
+        {
+            using (var db = new PhoneBookContext())
+            {
+                db.Database.EnsureCreated();
+
+                var (isNumber, id) = Helpers.IsNumber(contactProperty);
+
+                var contact = db.Contacts
+                    .OrderBy(contact => contact.Name)
+                    .Where(contact => isNumber && id > 0 ?
+                            contact.Id == id : contact.Name == contactProperty).First();
+
+                db.Remove(contact);
+
+                db.SaveChanges();
             }
         }
     }
