@@ -75,5 +75,25 @@ namespace PhoneBook
             var outputString = inputString.Trim().Split();
             return (outputString[1], outputString[2]);
         }
+
+        public static string CorrectSpelling(string command)
+        {
+            var definitions = new List<string> { "exit", "help", "show", "add", "update", "remove" };
+            string correctDefinition = "";
+            int maxPercentage = 0;
+
+            foreach (var definition in definitions)
+            {
+                int matchPercentage = FuzzySharp.Fuzz.Ratio(command, definition);
+
+                if (matchPercentage > maxPercentage)
+                {
+                    maxPercentage = matchPercentage;
+                    correctDefinition = definition;
+                };
+            }
+
+            return maxPercentage > 40 ? $"Did you mean {correctDefinition}?" : "";
+        }
     }
 }

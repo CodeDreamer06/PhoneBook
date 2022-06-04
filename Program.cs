@@ -19,26 +19,26 @@
 
                 else if (string.IsNullOrWhiteSpace(command)) continue;
 
-                else if (command.StartsWith("show"))
+                else if (command.StartsWith("show "))
                 {
                     SqlAccess.Read(command.Contains("sort-descending"));
                 }
 
-                else if (command.StartsWith("add"))
+                else if (command.StartsWith("add "))
                 {
                     var (name, phoneNumber) = Helpers.SplitString(rawCommand);
                     SqlAccess.Create(new Contact { Name = name, PhoneNumber = Helpers.IsNumber(phoneNumber).Item2 });
                     Console.WriteLine($"Successfully added {name}!");
                 }
 
-                else if (command.StartsWith("update"))
+                else if (command.StartsWith("update "))
                 {
                     var (id, contactProperty) = Helpers.SplitString(rawCommand);
                     var oldProperty = SqlAccess.Update((int) Helpers.IsNumber(id).Item2, contactProperty);
                     Console.WriteLine($"Successfully changed {oldProperty} to {contactProperty}!");
                 }
 
-                else if(command.StartsWith("remove"))
+                else if(command.StartsWith("remove "))
                 {
                     string name = SqlAccess.Delete(rawCommand.Replace("remove", "").Trim());
                     Console.WriteLine($"Successfully removed {name}!");
@@ -46,7 +46,8 @@
 
                 else
                 {
-                    Console.WriteLine("Not a command. Type 'help' for the list of all commands.");
+                    string suggestion = Helpers.CorrectSpelling(command.Split()[0]);
+                    Console.WriteLine($"Not a command. Type 'help' for the list of all commands. {suggestion}");
                 }
             }
         }
