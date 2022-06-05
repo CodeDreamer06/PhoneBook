@@ -1,13 +1,13 @@
-﻿using System.Reflection;
-using System.Globalization;
+﻿using System.Globalization;
+using ConsoleTableExt;
 
 namespace PhoneBook
 {
     public class Helpers
     {
         public static string message = @"
-# Welcome to PhoneBook!
-  A simple phone number manager to remember the phone numbers of your friends and other people!
+# Welcome to your PhoneBook!
+  Type 'help' to show this message again.
  * exit or 0: stop the program
  * show [optional: sort-descending]: display all contacts
  * add [name] [phone number]: create a new contact
@@ -16,7 +16,21 @@ namespace PhoneBook
  * remove [id or name]: delete a contact
 ";
 
-        public static void DisplayContactsAsTable(List<Contact> contacts, List<string> headers)
+        public static Dictionary<HeaderCharMapPositions, char> headerCharacterMap = new Dictionary<HeaderCharMapPositions, char> {
+                        {HeaderCharMapPositions.TopLeft, '╒' },
+                        {HeaderCharMapPositions.TopCenter, '╤' },
+                        { HeaderCharMapPositions.TopRight, '╕' },
+                        { HeaderCharMapPositions.BottomLeft, '╞' },
+                        { HeaderCharMapPositions.BottomCenter, '╪' },
+                        { HeaderCharMapPositions.BottomRight, '╡' },
+                        { HeaderCharMapPositions.BorderTop, '═' },
+                        { HeaderCharMapPositions.BorderRight, '│' },
+                        { HeaderCharMapPositions.BorderBottom, '═' },
+                        { HeaderCharMapPositions.BorderLeft, '│' },
+                        { HeaderCharMapPositions.Divider, '│' },
+                    };
+
+        public static void DisplayContactsAsTable(List<Contact> contacts)
         {
             if (contacts.Count == 0)
             {
@@ -24,49 +38,19 @@ namespace PhoneBook
                 return;
             }
 
-            int longestNameLength = contacts.Max(contact => contact.Name.Length);
-            string border = new String('-', longestNameLength + 19);
-
-            Console.WriteLine(border);
-
-            foreach (String header in headers)
-            {
-                int headerPadLength = header == "Name" ? longestNameLength - 1 : header == "Phone" ? 10 : 0;
-                Console.Write(header.PadRight(headerPadLength) + " | ");
-            }
-
-            Console.WriteLine();
-
-            Console.WriteLine(border);
-
-            for (int i = 0; i < contacts.Count(); i++)
-            {
-                foreach (PropertyInfo contact in contacts[i].GetType().GetProperties())
-                {
-                    var tableItem = contact.GetValue(contacts[i], null);
-
-                    if(tableItem!.GetType() == typeof(string))
-                    {
-                        Console.Write(tableItem.ToString()!.PadRight(longestNameLength) + " | ");
-                    }
-
-                    else
-                    {
-                        Console.Write(tableItem + " | ");
-                    }
-                }
-
-                Console.WriteLine();
-            }
-
-            Console.WriteLine(border);
+            ConsoleTableBuilder.From(contacts)
+                .WithCharMapDefinition(CharMapDefinition.FramePipDefinition, headerCharacterMap)
+                .ExportAndWriteLine();
         }
 
         public static (bool, long) IsNumber(object Expression)
         {
             long number;
-
-            bool isNum = long.TryParse(Convert.ToString(Expression), NumberStyles.Any, NumberFormatInfo.InvariantInfo, out number);
+            bool isNum = long.TryParse(
+                Convert.ToString(Expression),
+                NumberStyles.Any,
+                NumberFormatInfo.InvariantInfo,
+                out number);
 
             return (isNum, number);
         }
@@ -104,10 +88,7 @@ namespace PhoneBook
             foreach (var contact in contacts)
             {
                 int matchPercentage = FuzzySharp.Fuzz.PartialRatio(searchTerm, contact.Name);
-                if (matchPercentage > 40)
-                {
-                    suggestedContacts.Add(contact);
-                }
+                if (matchPercentage > 40) suggestedContacts.Add(contact);
             }
 
             return suggestedContacts;

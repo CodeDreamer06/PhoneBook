@@ -45,7 +45,7 @@ namespace PhoneBook
 
                 if (sortByDescendingOrder) contacts.Reverse();
 
-                Helpers.DisplayContactsAsTable(contacts, new List<string> { "Id", "Name", "Phone" });
+                Helpers.DisplayContactsAsTable(contacts);
             }
         }
 
@@ -111,7 +111,7 @@ namespace PhoneBook
 
                 var suggestedContacts = Helpers.GetSuggestions(searchTerm, contacts);
 
-                Helpers.DisplayContactsAsTable(suggestedContacts, new List<string> { "Id", "Name", "Phone" });
+                Helpers.DisplayContactsAsTable(suggestedContacts);
             }
         }
     }
