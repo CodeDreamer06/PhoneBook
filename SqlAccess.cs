@@ -49,7 +49,7 @@ namespace PhoneBook
             }
         }
 
-        public static dynamic Update(int id, string contactProperty)
+        public static dynamic Update(int relativeId, string contactProperty)
         {
             using (var db = new PhoneBookContext())
             {
@@ -57,7 +57,7 @@ namespace PhoneBook
 
                 var contact = db.Contacts
                     .OrderBy(contact => contact.Name)
-                    .Where(contact => contact.Id == id).First();
+                    .ToList()[(int) relativeId - 1];
 
                 var (isNumber, phoneNumber) = Helpers.IsNumber(contactProperty);
                 dynamic changedProperty;
@@ -85,12 +85,23 @@ namespace PhoneBook
             {
                 db.Database.EnsureCreated();
 
-                var (isNumber, id) = Helpers.IsNumber(contactProperty);
+                var (isNumber, relativeId) = Helpers.IsNumber(contactProperty);
 
-                var contact = db.Contacts
+                var contact = new Contact();
+
+                if (isNumber)
+                {
+                    contact = db.Contacts
+                    .OrderBy(contact => contact.Name).ToList()[(int) relativeId - 1];
+                }
+
+                else
+                {
+                    contact = db.Contacts
                     .OrderBy(contact => contact.Name)
-                    .Where(contact => isNumber && id > 0 ?
-                            contact.Id == id : contact.Name == contactProperty).First();
+                    .Where(contact => contact.Name == contactProperty)
+                    .First();
+                }
 
                 db.Remove(contact);
 

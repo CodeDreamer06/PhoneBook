@@ -38,6 +38,8 @@ namespace PhoneBook
                 return;
             }
 
+            for (int i = 0; i < contacts.Count; i++) contacts[i].Id = i + 1;
+
             ConsoleTableBuilder.From(contacts)
                 .WithCharMapDefinition(CharMapDefinition.FramePipDefinition, headerCharacterMap)
                 .ExportAndWriteLine();
