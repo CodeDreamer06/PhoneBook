@@ -10,7 +10,16 @@ namespace PhoneBook
 
             protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             {
-                optionsBuilder.UseSqlServer(System.Configuration.ConfigurationManager.ConnectionStrings["SQLServer"].ConnectionString);
+                try
+                {
+                    optionsBuilder.UseSqlServer(System.Configuration.ConfigurationManager.ConnectionStrings["SQLServer"].ConnectionString);
+                }
+
+                catch (Exception ex)
+                {
+                    Console.WriteLine("An unknown error occurred while creating the database. Please make sure SQL server is running.");
+                    Console.WriteLine(ex.Message);
+                }
             }
 
             protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -29,8 +38,18 @@ namespace PhoneBook
             using (var db = new PhoneBookContext())
             {
                 db.Database.EnsureCreated();
-                db.Contacts.Add(contact);
-                db.SaveChanges();
+
+                try
+                {
+                    db.Contacts.Add(contact);
+                    db.SaveChanges();
+                    Console.WriteLine($"Successfully added {contact.Name}!"); 
+                }
+
+                catch
+                {
+                    Console.WriteLine(Helpers.CreateErrorMessage, contact.Name);
+                }
             }
         }
 
@@ -39,43 +58,67 @@ namespace PhoneBook
             using (var db = new PhoneBookContext())
             {
                 db.Database.EnsureCreated();
-                var contacts = db.Contacts
+
+                try
+                {
+                    var contacts = db.Contacts
                     .OrderBy(contact => contact.Name)
                     .ToList();
 
-                if (sortByDescendingOrder) contacts.Reverse();
+                    if (sortByDescendingOrder) contacts.Reverse();
 
-                Helpers.DisplayContactsAsTable(contacts);
+                    Helpers.DisplayContactsAsTable(contacts);
+                }
+
+                catch
+                {
+                    Console.WriteLine(Helpers.ReadErrorMessage);
+                }
             }
         }
 
-        public static dynamic Update(int relativeId, string contactProperty)
+        public static void Update(int relativeId, string contactProperty)
         {
             using (var db = new PhoneBookContext())
             {
                 db.Database.EnsureCreated();
-
-                var contact = db.Contacts
-                    .OrderBy(contact => contact.Name)
-                    .ToList()[(int) relativeId - 1];
-
-                var (isNumber, phoneNumber) = Helpers.IsNumber(contactProperty);
                 dynamic changedProperty;
 
-                if (isNumber)
+                try
                 {
-                    changedProperty = contact.PhoneNumber;
-                    contact.PhoneNumber = phoneNumber;
+                    if (relativeId == 0)
+                    {
+                        Console.WriteLine(Helpers.UpdateStringSplitErrorMessage);
+                        return;
+                    }
+
+                    var contact = db.Contacts
+                    .OrderBy(contact => contact.Name)
+                    .ToList()[(int)relativeId - 1];
+
+                    var (isNumber, phoneNumber) = Helpers.IsNumber(contactProperty);
+
+                    if (isNumber)
+                    {
+                        changedProperty = contact.PhoneNumber;
+                        contact.PhoneNumber = phoneNumber;
+                    }
+                    else
+                    {
+                        changedProperty = contact.Name;
+                        contact.Name = contactProperty;
+                    }
+
+                    db.SaveChanges();
+
+                    Console.WriteLine($"Successfully changed {changedProperty} to {contactProperty}!");
                 }
-                else
+                
+                catch (Exception ex)
                 {
-                    changedProperty = contact.Name;
-                    contact.Name = contactProperty;
+                    Console.WriteLine(Helpers.UpdateErrorMessage, contactProperty);
+                    Console.WriteLine(ex.Message);
                 }
-
-                db.SaveChanges();
-
-                return changedProperty;
             }
         }
 
@@ -120,9 +163,17 @@ namespace PhoneBook
                     .OrderBy(contact => contact.Name)
                     .ToList();
 
-                var suggestedContacts = Helpers.GetSuggestions(searchTerm, contacts);
+                try
+                {
+                    var suggestedContacts = Helpers.GetSuggestions(searchTerm, contacts);
 
-                Helpers.DisplayContactsAsTable(suggestedContacts);
+                    Helpers.DisplayContactsAsTable(suggestedContacts);
+                }
+
+                catch
+                {
+                    Console.WriteLine(Helpers.SearchErrorMessage);
+                }
             }
         }
     }

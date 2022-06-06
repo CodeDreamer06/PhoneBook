@@ -5,7 +5,7 @@ namespace PhoneBook
 {
     public class Helpers
     {
-        public static string message = @"
+        public static string Message = @"
 # Welcome to your PhoneBook!
   Type 'help' to show this message again.
  * exit or 0: stop the program
@@ -16,7 +16,27 @@ namespace PhoneBook
  * remove [id or name]: delete a contact
 ";
 
-        public static Dictionary<HeaderCharMapPositions, char> headerCharacterMap = new Dictionary<HeaderCharMapPositions, char> {
+        public static string AddErrorMessage = @"
+add commands should be in the form 'add [name] [phone number]'.
+Example: 'add Emergency 911' creates a contact with the name 'Emergency' with the number '911'.";
+
+        public static string UpdateStringSplitErrorMessage = @"
+update commands should be in the form 'update [id] [new name or new number]'.
+Example: 'update 2 John' changes the contact name of the second record to 'John'";
+
+        public static string RemoveErrorMessage = @"
+remove commands should be in the form 'remove [id or name].
+Example: 'remove Kyle' removes Kyle from your phonebook.";
+
+        public static string SearchErrorMessage = "An unexpected error occurred while searching for your contact.";
+
+        public static string CreateErrorMessage = "An unknown error occurred while adding {0} to your contacts.";
+
+        public static string ReadErrorMessage = "An unknown error occurred while fetching your contacts.";
+
+        public static string UpdateErrorMessage = "An unknown error occurred while updating {0}.";
+
+        public static Dictionary<HeaderCharMapPositions, char> HeaderCharacterMap = new Dictionary<HeaderCharMapPositions, char> {
                         {HeaderCharMapPositions.TopLeft, '╒' },
                         {HeaderCharMapPositions.TopCenter, '╤' },
                         { HeaderCharMapPositions.TopRight, '╕' },
@@ -41,7 +61,7 @@ namespace PhoneBook
             for (int i = 0; i < contacts.Count; i++) contacts[i].Id = i + 1;
 
             ConsoleTableBuilder.From(contacts)
-                .WithCharMapDefinition(CharMapDefinition.FramePipDefinition, headerCharacterMap)
+                .WithCharMapDefinition(CharMapDefinition.FramePipDefinition, HeaderCharacterMap)
                 .ExportAndWriteLine();
         }
 
@@ -57,10 +77,19 @@ namespace PhoneBook
             return (isNum, number);
         }
 
-        public static (string, string) SplitString(string inputString)
+        public static (string?, string?) SplitString(string inputString, string errorMessage = "Invalid format. Please check 'help' for more info.")
         {
-            var outputString = inputString.Trim().Split();
-            return (outputString[1], outputString[2]);
+            try
+            {
+                string[] outputString = inputString.Trim().Split();
+                return (outputString[1], outputString[2]);
+            }
+
+            catch (FormatException)
+            {
+                Console.WriteLine(errorMessage);
+                return (null, null);
+            }
         }
 
         public static string CorrectSpelling(string command)
@@ -69,18 +98,26 @@ namespace PhoneBook
             string correctDefinition = "";
             int maxPercentage = 0;
 
-            foreach (var definition in definitions)
+            try
             {
-                int matchPercentage = FuzzySharp.Fuzz.Ratio(command, definition);
-
-                if (matchPercentage > maxPercentage)
+                foreach (var definition in definitions)
                 {
-                    maxPercentage = matchPercentage;
-                    correctDefinition = definition;
-                };
+                    int matchPercentage = FuzzySharp.Fuzz.Ratio(command, definition);
+
+                    if (matchPercentage > maxPercentage)
+                    {
+                        maxPercentage = matchPercentage;
+                        correctDefinition = definition;
+                    };
+                }
+
+                return maxPercentage > 40 ? $"Did you mean {correctDefinition}?" : "";
             }
 
-            return maxPercentage > 40 ? $"Did you mean {correctDefinition}?" : "";
+            catch
+            {
+                return "";
+            }
         }
 
         public static List<Contact> GetSuggestions(string searchTerm, List<Contact> contacts)
