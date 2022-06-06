@@ -1,4 +1,6 @@
-﻿namespace PhoneBook
+﻿using ExtensionMethods;
+
+namespace PhoneBook
 {
     class Program
     {
@@ -26,7 +28,7 @@
 
                 else if (command.StartsWith("add "))
                 {
-                    var (name, phoneNumber) = Helpers.SplitString(rawCommand, Helpers.AddErrorMessage);
+                    var (name, phoneNumber) = Helpers.SplitString(rawCommand.RemoveKeyword("add "), Helpers.AddErrorMessage);
 
                     if (name == null || phoneNumber == null) continue;
 
@@ -35,7 +37,7 @@
 
                 else if (command.StartsWith("update "))
                 {
-                    var (id, contactProperty) = Helpers.SplitString(rawCommand, Helpers.UpdateStringSplitErrorMessage);
+                    var (id, contactProperty) = Helpers.SplitString(rawCommand.RemoveKeyword("update "), Helpers.UpdateStringSplitErrorMessage);
 
                     if (id == null || contactProperty == null) continue;
 
@@ -73,8 +75,24 @@
 
                     if (cancelled) continue;
 
-                    string name = SqlAccess.Delete(contactProperty);
-                    Console.WriteLine($"Successfully removed {name}!");
+                    try
+                    {
+                        string name = SqlAccess.Delete(contactProperty);
+                        Console.WriteLine($"Successfully removed {name}!");
+                    }
+
+                    catch (Exception ex)
+                    {
+                        if (ex.GetType() == typeof(InvalidOperationException))
+                        {
+                            Console.WriteLine(Helpers.InvalidOperationErrorMessage, contactProperty);
+                        }
+
+                        else
+                        {
+                            Console.WriteLine(Helpers.DeleteErrorMessage);
+                        }
+                    }
                 }
 
                 else if(command.StartsWith("search "))

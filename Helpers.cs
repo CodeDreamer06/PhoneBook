@@ -10,19 +10,21 @@ namespace PhoneBook
   Type 'help' to show this message again.
  * exit or 0: stop the program
  * show [optional: sort-descending]: display all contacts
- * add [name] [phone number]: create a new contact
- * update [id] [new name or new number]: edit an existing contact
+ * add [name], [phone number]: create a new contact
+ * update [id], [new name or new number]: edit an existing contact
  * search [search term]: search in your phonebook
  * remove [id or name]: delete a contact
 ";
 
+        public static string NoContactsMessage = "There are no contacts currently saved. Type 'help' to learn how to create a new contact.";
+
         public static string AddErrorMessage = @"
-add commands should be in the form 'add [name] [phone number]'.
-Example: 'add Emergency 911' creates a contact with the name 'Emergency' with the number '911'.";
+add commands should be in the form 'add [name], [phone number]'.
+Example: 'add Emergency Helpline, 911' creates a contact with the name 'Emergency Helpline' with the number '911'.";
 
         public static string UpdateStringSplitErrorMessage = @"
-update commands should be in the form 'update [id] [new name or new number]'.
-Example: 'update 2 John' changes the contact name of the second record to 'John'";
+update commands should be in the form 'update [id], [new name or new number]'.
+Example: 'update 2, John Dalton' changes the contact name of the second record to 'John Dalton'";
 
         public static string RemoveErrorMessage = @"
 remove commands should be in the form 'remove [id or name].
@@ -35,6 +37,10 @@ Example: 'remove Kyle' removes Kyle from your phonebook.";
         public static string ReadErrorMessage = "An unknown error occurred while fetching your contacts.";
 
         public static string UpdateErrorMessage = "An unknown error occurred while updating {0}.";
+
+        public static string DeleteErrorMessage = "An unknown error occurred while removing your contact";
+
+        public static string InvalidOperationErrorMessage = "Failed to delete {0}, because {0} doesn't exist in your contacts.";
 
         public static Dictionary<HeaderCharMapPositions, char> HeaderCharacterMap = new Dictionary<HeaderCharMapPositions, char> {
                         {HeaderCharMapPositions.TopLeft, '╒' },
@@ -54,7 +60,7 @@ Example: 'remove Kyle' removes Kyle from your phonebook.";
         {
             if (contacts.Count == 0)
             {
-                Console.WriteLine("There are no contacts currently saved. Type 'help' to learn how to create a new contact.");
+                Console.WriteLine(NoContactsMessage);
                 return;
             }
 
@@ -81,11 +87,11 @@ Example: 'remove Kyle' removes Kyle from your phonebook.";
         {
             try
             {
-                string[] outputString = inputString.Trim().Split();
-                return (outputString[1], outputString[2]);
+                string[] outputString = inputString.Trim().Split(',');
+                return (outputString[0].Trim(), outputString[1].Trim());
             }
 
-            catch (FormatException)
+            catch
             {
                 Console.WriteLine(errorMessage);
                 return (null, null);
@@ -131,6 +137,17 @@ Example: 'remove Kyle' removes Kyle from your phonebook.";
             }
 
             return suggestedContacts;
+        }
+    }
+}
+
+namespace ExtensionMethods
+{
+    public static class Extensions
+    {
+        public static string RemoveKeyword(this string str, string keyword)
+        {
+            return str.Replace(keyword, "");
         }
     }
 }
