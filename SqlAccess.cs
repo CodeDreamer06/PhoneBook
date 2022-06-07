@@ -29,6 +29,7 @@ namespace PhoneBook
                     entity.Property(entity => entity.Id).HasColumnName("Id");
                     entity.Property(entity => entity.Name).HasMaxLength(50).IsUnicode(false);
                     entity.Property(entity => entity.PhoneNumber).HasMaxLength(10).IsUnicode(false);
+                    entity.Property(entity => entity.Email).HasMaxLength(320).IsUnicode(false);
                 });
             }
         }

@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using ConsoleTableExt;
 
 namespace PhoneBook
@@ -10,20 +11,24 @@ namespace PhoneBook
   Type 'help' to show this message again.
  * exit or 0: stop the program
  * show [optional: sort-descending]: display all contacts
- * add [name], [phone number]: create a new contact
- * update [id], [new name or new number]: edit an existing contact
+ * add [name], [phone number], [optional: email]: create a new contact
+ * update [id], [new name, email or number]: edit an existing contact
  * search [search term]: search in your phonebook
  * remove [id or name]: delete a contact
+ * email [names]: email a contact
 ";
+        public static string InitialEmailMessage = @"
+Please enter your email and password.
+It will be saved, so you don't need to re-enter your credentials again.";
 
         public static string NoContactsMessage = "There are no contacts currently saved. Type 'help' to learn how to create a new contact.";
 
         public static string AddErrorMessage = @"
-add commands should be in the form 'add [name], [phone number]'.
+add commands should be in the form 'add [name], [phone number], [optional: email].
 Example: 'add Emergency Helpline, 911' creates a contact with the name 'Emergency Helpline' with the number '911'.";
 
         public static string UpdateStringSplitErrorMessage = @"
-update commands should be in the form 'update [id], [new name or new number]'.
+update commands should be in the form 'update [id], [new name, email or number]'.
 Example: 'update 2, John Dalton' changes the contact name of the second record to 'John Dalton'";
 
         public static string RemoveErrorMessage = @"
@@ -42,6 +47,12 @@ Example: 'remove Kyle' removes Kyle from your phonebook.";
 
         public static string InvalidOperationErrorMessage = "Failed to delete {0}, because {0} doesn't exist in your contacts.";
 
+        public static string EmailFormatErrorMessage = @"
+email commands should be in the form 'email [names].
+Example: 'email kyle, adam' creates an email for kyle and adam.";
+
+        public static string EmailDispatchErrorMessage = "An unknown error occurred whlie sending your email.";
+
         public static Dictionary<HeaderCharMapPositions, char> HeaderCharacterMap = new Dictionary<HeaderCharMapPositions, char> {
                         {HeaderCharMapPositions.TopLeft, '╒' },
                         {HeaderCharMapPositions.TopCenter, '╤' },
@@ -55,6 +66,8 @@ Example: 'remove Kyle' removes Kyle from your phonebook.";
                         { HeaderCharMapPositions.BorderLeft, '│' },
                         { HeaderCharMapPositions.Divider, '│' },
                     };
+
+        public static string EmailRegex = @"\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\Z";
 
         public static void DisplayContactsAsTable(List<Contact> contacts)
         {
@@ -81,6 +94,11 @@ Example: 'remove Kyle' removes Kyle from your phonebook.";
                 out number);
 
             return (isNum, number);
+        }
+
+        public static bool IsEmailValid(string email)
+        {
+            return Regex.IsMatch(email, EmailRegex, RegexOptions.IgnoreCase);
         }
 
         public static (string?, string?) SplitString(string inputString, string errorMessage = "Invalid format. Please check 'help' for more info.")

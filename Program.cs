@@ -50,7 +50,7 @@ namespace PhoneBook
 
                     try
                     {
-                        contactProperty = rawCommand.Replace("remove", "").Trim();
+                        contactProperty = rawCommand.RemoveKeyword("remove").Trim();
                     }
 
                     catch
@@ -97,7 +97,42 @@ namespace PhoneBook
 
                 else if(command.StartsWith("search "))
                 {
-                    SqlAccess.Search(rawCommand.Replace("search", "").Trim());
+                    SqlAccess.Search(rawCommand.RemoveKeyword("search").Trim());
+                }
+
+                else if(command.StartsWith("email "))
+                {
+                    try
+                    {
+                        var recievers = rawCommand.RemoveKeyword("email").Trim().Split(',');
+                        var emailService = new EmailService(recievers);
+
+                        if (EmailService.UserName == null || EmailService.Password == null)
+                        {
+                            Console.WriteLine(Helpers.InitialEmailMessage);
+
+                            Console.Write("Your Email: ");
+                            EmailService.UserName = Console.ReadLine()!;
+
+                            Console.Write("Password: ");
+                            EmailService.Password = Console.ReadLine()!;
+                        }
+
+                        Console.Write("Subject: ");
+                        string subject = Console.ReadLine()!;
+
+                        Console.Write("Email Body: ");
+                        string body = Console.ReadLine()!;
+
+                        emailService.SendEmails(subject, body);
+
+                    }
+                    
+                    catch (FormatException)
+                    {
+                        Console.WriteLine(Helpers.EmailFormatErrorMessage);
+                        continue;
+                    }
                 }
 
                 else
