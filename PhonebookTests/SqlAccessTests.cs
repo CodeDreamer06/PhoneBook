@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using Phonebook;
 
@@ -28,7 +26,7 @@ namespace PhonebookTests
             var contact = new Contact { Name = "Abhinav", PhoneNumber = 7969630205 };
             _db?.Create(contact);
 
-            Assert.AreEqual(JsonConvert.SerializeObject(contact), JsonConvert.SerializeObject(_db?.GetLastContact()!));
+            Assert.AreEqual(contact, _db?.GetLastContact()!);
             _db?.Delete(contact.Name);
         }
 
@@ -77,10 +75,10 @@ namespace PhonebookTests
             _db?.Create(contact);
 
             int relativeId = (int)_db?.GetRelativeId(contact.Name)!;
+
             _db?.Delete(relativeId.ToString());
 
-            Assert.AreNotEqual(JsonConvert.SerializeObject(contact),
-                JsonConvert.SerializeObject(_db?.GetLastContact()));
+            Assert.AreNotEqual(contact, _db?.GetLastContact()!);
         }
     }
 }

@@ -105,7 +105,8 @@ namespace Phonebook
 
                 else if (_command.StartsWith("search "))
                 {
-                    _db.Search(rawCommand.RemoveKeyword("search").Trim());
+                    var suggestedContacts = _db.Search(rawCommand.RemoveKeyword("search").Trim());
+                    Helpers.DisplayContactsAsTable(suggestedContacts);
                 }
 
                 else if (_command.StartsWith("email "))

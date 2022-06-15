@@ -10,21 +10,6 @@ namespace Phonebook
         {
         }
 
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //{
-        //    try
-        //    {
-        //        optionsBuilder.UseSqlServer(System.Configuration.ConfigurationManager.ConnectionStrings["SQLServer"]
-        //            .ConnectionString);
-        //    }
-
-        //    catch
-        //    {
-        //        Console.WriteLine(
-        //            "An unknown error occurred while creating the database. Please make sure SQL server is running.");
-        //    }
-        //}
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Contact>(entity =>
@@ -130,7 +115,7 @@ namespace Phonebook
             if (isNumber)
             {
                 contact = _db.Contacts
-                    .OrderBy(c => c.Name).ToList()[(int)relativeId - 1];
+                    .OrderBy(c => c.Name).ToList()[(int) relativeId - 1];
             }
 
             else
@@ -139,6 +124,8 @@ namespace Phonebook
                     .OrderBy(c => c.Name).First(c => c.Name == contactProperty);
             }
 
+            Console.WriteLine(contact.ToString());
+
             _db.Remove(contact);
 
             _db.SaveChanges();
@@ -146,7 +133,7 @@ namespace Phonebook
             Console.WriteLine($"Successfully removed {contact.Name}!");
         }
 
-        public void Search(string searchTerm)
+        public List<Contact> Search(string searchTerm)
         {
             var contacts = _db.Contacts
                 .OrderBy(contact => contact.Name)
@@ -154,14 +141,13 @@ namespace Phonebook
 
             try
             {
-                var suggestedContacts = Helpers.GetSuggestions(searchTerm, contacts);
-
-                Helpers.DisplayContactsAsTable(suggestedContacts);
+                return Helpers.GetSuggestions(searchTerm, contacts);
             }
 
             catch
             {
                 Console.WriteLine(Helpers.SearchErrorMessage);
+                return new List<Contact>();
             }
         }
 
