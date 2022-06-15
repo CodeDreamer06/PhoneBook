@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 using ConsoleTableExt;
+using ExtensionMethods;
 
 namespace Phonebook
 {
@@ -77,18 +78,20 @@ Example: 'email kyle, adam' creates an email for kyle and adam.";
                 return;
             }
 
-            for (int i = 0; i < contacts.Count; i++) contacts[i].Id = i + 1;
+            List<Contact> contactsClone = contacts.ConvertAll(contact => contact.GetDeepClone());
 
-            ConsoleTableBuilder.From(contacts)
+            for (int i = 0; i < contactsClone.Count; i++) contactsClone[i].Id = ++i;
+
+            ConsoleTableBuilder.From(contactsClone)
                 .WithCharMapDefinition(CharMapDefinition.FramePipDefinition, HeaderCharacterMap)
                 .ExportAndWriteLine();
         }
 
-        public static (bool, long) IsNumber(object Expression)
+        public static (bool, long) IsNumber(object testObject)
         {
             long number;
             bool isNum = long.TryParse(
-                Convert.ToString(Expression),
+                Convert.ToString(testObject),
                 NumberStyles.Any,
                 NumberFormatInfo.InvariantInfo,
                 out number);
@@ -166,6 +169,13 @@ namespace ExtensionMethods
         public static string RemoveKeyword(this string str, string keyword)
         {
             return str.Replace(keyword, "");
+        }
+
+        public static void ForEachWithIndex<T>(this IEnumerable<T> enumerable, Action<T, int> handler)
+        {
+            int index = 0;
+            foreach (T item in enumerable)
+                handler(item, index++);
         }
     }
 }

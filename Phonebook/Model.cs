@@ -11,5 +11,10 @@
         {
             return $"Id: {Id}, Name: {Name}, Phone number: {PhoneNumber}" + (Email is null? "" : $", {Email}");
         }
+
+        public Contact GetDeepClone()
+        {
+            return new Contact { Id = this.Id, Name = this.Name, PhoneNumber = this.PhoneNumber };
+        }
     }
 }

@@ -57,7 +57,7 @@ namespace Phonebook
 
                 if (sortByDescendingOrder) contacts.Reverse();
 
-                Helpers.DisplayContactsAsTable(contacts);
+                Helpers.DisplayContactsAsTable(new List<Contact>(contacts));
             }
 
             catch
