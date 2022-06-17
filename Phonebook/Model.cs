@@ -1,20 +1,11 @@
-﻿namespace Phonebook
+﻿namespace Phonebook;
+
+public class Contact
 {
-    public class Contact
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public long PhoneNumber { get; set; }
-        public string? Email { get; set; }
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public long PhoneNumber { get; set; }
+    public string? Email { get; set; }
 
-        public override string ToString()
-        {
-            return $"Id: {Id}, Name: {Name}, Phone number: {PhoneNumber}" + (Email is null? "" : $", {Email}");
-        }
-
-        public Contact GetDeepClone()
-        {
-            return new Contact { Id = this.Id, Name = this.Name, PhoneNumber = this.PhoneNumber };
-        }
-    }
+    public Contact GetDeepClone() => new() { Id = Id, Name = Name, PhoneNumber = PhoneNumber, Email = Email };
 }

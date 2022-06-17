@@ -1,11 +1,10 @@
-﻿namespace Phonebook
+﻿namespace Phonebook;
+
+internal static class Program
 {
-    class Program
+    private static void Main()
     {
-        static void Main(string[] args)
-        {
-            Console.WriteLine(Helpers.Message);
-            UserInput.ShowMenu();
-        }
+        Console.WriteLine(Helpers.Message);
+        UserInput.ShowMenu();
     }
 }

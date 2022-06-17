@@ -1,155 +1,176 @@
-﻿using ExtensionMethods;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using ExtensionMethods;
 
-namespace Phonebook
+namespace Phonebook;
+
+public static class UserInput
 {
-    public static class UserInput
+    internal static void ShowMenu()
     {
-        private static string _command = "";
-        private static SqlAccess? _db;
+        var contextOptions = new DbContextOptionsBuilder<PhonebookContext>()
+            .UseSqlServer(System.Configuration.ConfigurationManager.ConnectionStrings["SQLServer"].ConnectionString)
+            .Options;
 
-        internal static void ShowMenu()
+        var context = new PhonebookContext(contextOptions);
+        var db = new SqlAccess(context);
+
+        while (true)
         {
-            var contextOptions = new DbContextOptionsBuilder<PhonebookContext>()
-                .UseSqlServer(System.Configuration.ConfigurationManager.ConnectionStrings["SQLServer"].ConnectionString)
-                .Options;
+            var rawCommand = Console.ReadLine()!;
+            var command = rawCommand.Trim().ToLower();
 
-            var context = new PhonebookContext(contextOptions);
-            _db = new SqlAccess(context);
+            if (command is "exit" or "0") break;
 
-            while (true)
+            if (command == "help") Console.WriteLine(Helpers.Message);
+
+            else if (string.IsNullOrWhiteSpace(command)) continue;
+
+            else if (command.StartsWith("show"))
             {
-                var rawCommand = Console.ReadLine()!;
-                _command = rawCommand.Trim().ToLower();
+                db.Read(command.Contains("sort-descending"));
+            }
 
-                if (_command is "exit" or "0") break;
+            else if (command.StartsWith("add "))
+            {
+                var (name, phoneNumber, email) =
+                    Helpers.SplitString(rawCommand.RemoveKeyword("add "), Helpers.AddErrorMessage);
 
-                else if (_command == "help") Console.WriteLine(Helpers.Message);
+                if (Validation.IsContactValid(name, phoneNumber, email))
+                    db.Create(new Contact
+                        { Name = name!, PhoneNumber = Validation.IsNumber(phoneNumber!).Item2, Email = email });
+            }
 
-                else if (string.IsNullOrWhiteSpace(_command)) continue;
+            else if (command.StartsWith("update "))
+            {
+                var (id, contactProperty, _) = Helpers.SplitString(rawCommand.RemoveKeyword("update "),
+                    Helpers.UpdateStringSplitErrorMessage);
 
-                else if (_command.StartsWith("show"))
+                if (contactProperty is null) continue;
+
+                db.Update((int)Validation.IsNumber(id!).Item2, contactProperty);
+            }
+
+            else if (command.StartsWith("remove "))
+            {
+                string contactProperty;
+
+                try
                 {
-                    _db.Read(_command.Contains("sort-descending"));
+                    contactProperty = rawCommand.RemoveKeyword("remove").Trim();
                 }
 
-                else if (_command.StartsWith("add "))
+                catch
                 {
-                    var (name, phoneNumber) =
-                        Helpers.SplitString(rawCommand.RemoveKeyword("add "), Helpers.AddErrorMessage);
-
-                    if (name == null || phoneNumber == null) continue;
-
-                    _db.Create(new Contact { Name = name, PhoneNumber = Helpers.IsNumber(phoneNumber).Item2 });
+                    Console.WriteLine(Helpers.RemoveErrorMessage);
+                    continue;
                 }
 
-                else if (_command.StartsWith("update "))
+                Console.WriteLine($"Are you sure you want to remove {contactProperty}? True/False");
+
+                bool cancelled = true;
+
+                try
                 {
-                    var (id, contactProperty) = Helpers.SplitString(rawCommand.RemoveKeyword("update "),
-                        Helpers.UpdateStringSplitErrorMessage);
-
-                    if (id == null || contactProperty == null) continue;
-
-                    _db.Update((int)Helpers.IsNumber(id).Item2, contactProperty);
+                    cancelled = !bool.Parse(Console.ReadLine()!);
                 }
 
-                else if (_command.StartsWith("remove "))
+                catch
                 {
-                    string contactProperty;
-
-                    try
-                    {
-                        contactProperty = rawCommand.RemoveKeyword("remove").Trim();
-                    }
-
-                    catch
-                    {
-                        Console.WriteLine(Helpers.RemoveErrorMessage);
-                        continue;
-                    }
-
-                    Console.WriteLine($"Are you sure you want to remove {contactProperty}? True/False");
-
-                    bool cancelled = true;
-
-                    try
-                    {
-                        cancelled = !bool.Parse(Console.ReadLine()!);
-                    }
-
-                    catch
-                    {
-                        Console.WriteLine("Please type either True or False.");
-                    }
-
-                    if (cancelled) continue;
-
-                    try
-                    {
-                        _db.Delete(contactProperty);
-                    }
-
-                    catch (Exception ex)
-                    {
-                        if (ex.GetType() == typeof(InvalidOperationException))
-                        {
-                            Console.WriteLine(Helpers.InvalidOperationErrorMessage, contactProperty);
-                        }
-
-                        else
-                        {
-                            Console.WriteLine(Helpers.DeleteErrorMessage);
-                        }
-                    }
+                    Console.WriteLine("Please type either True or False.");
                 }
 
-                else if (_command.StartsWith("search "))
+                if (cancelled) continue;
+
+                try
                 {
-                    var suggestedContacts = _db.Search(rawCommand.RemoveKeyword("search").Trim());
-                    Helpers.DisplayContactsAsTable(suggestedContacts);
+                    db.Delete(contactProperty);
                 }
 
-                else if (_command.StartsWith("email "))
+                catch (Exception ex)
                 {
-                    try
+                    if (ex.GetType() == typeof(InvalidOperationException))
                     {
-                        var receivers = rawCommand.RemoveKeyword("email").Trim().Split(',');
-                        var emailService = new EmailService(receivers);
-
-                        if (EmailService.UserName == null || EmailService.Password == null)
-                        {
-                            Console.WriteLine(Helpers.InitialEmailMessage);
-
-                            Console.Write("Your Email: ");
-                            EmailService.UserName = Console.ReadLine()!;
-
-                            Console.Write("Password: ");
-                            EmailService.Password = Console.ReadLine()!;
-                        }
-
-                        Console.Write("Subject: ");
-                        string subject = Console.ReadLine()!;
-
-                        Console.Write("Email Body: ");
-                        string body = Console.ReadLine()!;
-
-                        emailService.SendEmails(subject, body);
+                        Console.WriteLine(Helpers.InvalidOperationErrorMessage, contactProperty);
                     }
 
-                    catch (FormatException)
+                    else
                     {
-                        Console.WriteLine(Helpers.EmailFormatErrorMessage);
+                        Console.WriteLine(Helpers.DeleteErrorMessage);
                     }
-                }
-
-                else
-                {
-                    string suggestion = Helpers.CorrectSpelling(_command.Split()[0]);
-                    Console.WriteLine($"Not a command. Type 'help' for the list of all commands. {suggestion}");
                 }
             }
 
-            context.Dispose();
+            else if (command.StartsWith("search "))
+            {
+                var suggestedContacts = db.Search(rawCommand.RemoveKeyword("search").Trim());
+                Helpers.DisplayTable(suggestedContacts, "No results found.");
+            }
+
+            else if (command.StartsWith("email "))
+            {
+                try
+                {
+                    var receiver = rawCommand.RemoveKeyword("email").Trim();
+
+                    try
+                    {
+                        receiver = db.GetEmail(receiver)!;
+                    }
+
+                    catch
+                    {
+                        Console.WriteLine($"{receiver} doesn't exist in your contacts.");
+                    }
+
+                    var emailService = new EmailService();
+
+                    if (emailService.IsAccountNull())
+                    {
+                        Console.WriteLine(Helpers.InitialEmailMessage);
+                        string email = "", password = "";
+
+
+                        Console.Write("Your Email: ");
+                        email = Console.ReadLine()!;
+
+
+                        Console.Write("Password: ");
+                        password = Console.ReadLine()!;
+
+                        try
+                        {
+                            emailService.SetEmailConfig(email, password);
+                        }
+
+                        catch (FormatException)
+                        {
+                            Console.WriteLine("Please enter a valid email.");
+                        }
+                    }
+
+                    Console.Write("Subject: ");
+                    string subject = Console.ReadLine()!;
+
+                    Console.Write("Email Body: ");
+                    string body = Console.ReadLine()!;
+
+                    emailService.SendEmail(receiver, subject, body);
+                    Console.WriteLine(Helpers.EmailSuccessMessage);
+                }
+
+                catch (FormatException)
+                {
+                    Console.WriteLine(Helpers.EmailFormatErrorMessage);
+                }
+            }
+
+            else
+            {
+                string suggestion = Helpers.CorrectSpelling(command.Split()[0]);
+                Console.WriteLine($"Not a command. Type 'help' for the list of all commands. {suggestion}");
+            }
         }
+
+        context.Dispose();
     }
 }

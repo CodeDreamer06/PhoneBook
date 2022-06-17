@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using Phonebook;
 
@@ -7,7 +6,7 @@ namespace PhonebookTests
 {
     public class SqlAccessTests
     {
-        SqlAccess? _db;
+        private SqlAccess? _db;
 
         [SetUp]
         public void Init()
@@ -24,6 +23,16 @@ namespace PhonebookTests
         public void Create_WithoutEmail_DbRowIsAdded()
         {
             var contact = new Contact { Name = "Abhinav", PhoneNumber = 7969630205 };
+            _db?.Create(contact);
+
+            Assert.AreEqual(contact, _db?.GetLastContact()!);
+            _db?.Delete(contact.Name);
+        }
+
+        [Test]
+        public void Create_WithEmail_DbRowIsAdded()
+        {
+            var contact = new Contact { Name = "Abhinav", PhoneNumber = 7969630205, Email = "Abhinav06@gmail.com" };
             _db?.Create(contact);
 
             Assert.AreEqual(contact, _db?.GetLastContact()!);
@@ -57,6 +66,19 @@ namespace PhonebookTests
         }
 
         [Test]
+        public void Update_ChangeEmail_DbRowIsUpdated()
+        {
+            var contact = new Contact { Name = "Stephen Paul", PhoneNumber = 7467246466, Email = "Paul1996@gmail.com" };
+            _db?.Create(contact);
+
+            int relativeId = (int)_db?.GetRelativeId(contact.Name)!;
+            _db?.Update(relativeId, "Stephen1996@gmail.com");
+
+            Assert.AreEqual(contact.Email, _db?.GetLastContact()!.Email);
+            _db?.Delete(contact.Name);
+        }
+
+        [Test]
         public void Delete_UsingName_DbRowIsRemoved()
         {
             var contact = new Contact { Name = "Daniel", PhoneNumber = 9668382716 };
@@ -79,6 +101,17 @@ namespace PhonebookTests
             _db?.Delete(relativeId.ToString());
 
             Assert.AreNotEqual(contact, _db?.GetLastContact()!);
+        }
+
+        [Test]
+        public void GetEmail_ValidName_ReturnsEmail()
+        {
+            var contact = new Contact { Name = "Thomas", PhoneNumber = 9649966698, Email = "thomas96@gmail.com" };
+
+            _db?.Create(contact);
+
+            Assert.AreEqual(_db?.GetLastContact()!.Email, _db?.GetEmail(contact.Name));
+            _db?.Delete(contact.Name);
         }
     }
 }
