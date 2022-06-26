@@ -145,9 +145,20 @@ namespace ExtensionMethods
 {
     public static class Extensions
     {
-        public static string RemoveKeyword(this string str, string keyword)
+        public static string? RemoveKeyword(this string str, string keyword, string errorMessage = "")
         {
-            return str.Replace(keyword, "");
+            try
+            {
+                return str.Replace(keyword, "");
+            }
+
+            catch (FormatException)
+            {
+                if (!string.IsNullOrEmpty(errorMessage)) 
+                    Console.WriteLine(errorMessage);
+
+                return null;
+            }
         }
     }
 }

@@ -33,7 +33,7 @@ public static class UserInput
             else if (command.StartsWith("add "))
             {
                 var (name, phoneNumber, email) =
-                    Helpers.SplitString(rawCommand.RemoveKeyword("add "), Helpers.AddErrorMessage);
+                    Helpers.SplitString(rawCommand.RemoveKeyword("add ")!, Helpers.AddErrorMessage);
 
                 if (Validation.IsContactValid(name, phoneNumber, email))
                     db.Create(new Contact
@@ -42,7 +42,7 @@ public static class UserInput
 
             else if (command.StartsWith("update "))
             {
-                var (id, contactProperty, _) = Helpers.SplitString(rawCommand.RemoveKeyword("update "),
+                var (id, contactProperty, _) = Helpers.SplitString(rawCommand.RemoveKeyword("update ")!,
                     Helpers.UpdateStringSplitErrorMessage);
 
                 if (contactProperty is null) continue;
@@ -52,116 +52,63 @@ public static class UserInput
 
             else if (command.StartsWith("remove "))
             {
-                string contactProperty;
+                var contactProperty = rawCommand.RemoveKeyword("remove");
 
-                try
-                {
-                    contactProperty = rawCommand.RemoveKeyword("remove").Trim();
-                }
-
-                catch
+                if (contactProperty is null)
                 {
                     Console.WriteLine(Helpers.RemoveErrorMessage);
                     continue;
                 }
+                
+                contactProperty = contactProperty.Trim();
 
                 Console.WriteLine($"Are you sure you want to remove {contactProperty}? True/False");
 
-                bool cancelled = true;
+                var isCancelled = GetBoolInput();
 
-                try
-                {
-                    cancelled = !bool.Parse(Console.ReadLine()!);
-                }
+                if (isCancelled) continue;
 
-                catch
-                {
-                    Console.WriteLine("Please type either True or False.");
-                }
-
-                if (cancelled) continue;
-
-                try
-                {
-                    db.Delete(contactProperty);
-                }
-
-                catch (Exception ex)
-                {
-                    if (ex.GetType() == typeof(InvalidOperationException))
-                    {
-                        Console.WriteLine(Helpers.InvalidOperationErrorMessage, contactProperty);
-                    }
-
-                    else
-                    {
-                        Console.WriteLine(Helpers.DeleteErrorMessage);
-                    }
-                }
+                db.Delete(contactProperty);
             }
 
             else if (command.StartsWith("search "))
             {
-                var suggestedContacts = db.Search(rawCommand.RemoveKeyword("search").Trim());
+                var suggestedContacts = db.Search(rawCommand.RemoveKeyword("search")!.Trim());
                 Helpers.DisplayTable(suggestedContacts, "No results found.");
             }
 
             else if (command.StartsWith("email "))
             {
-                try
+                var receiver = rawCommand.RemoveKeyword("email", Helpers.EmailFormatErrorMessage)!.Trim();
+  
+                receiver = db.GetEmail(receiver);
+
+                var emailService = new EmailService();
+
+                if (emailService.IsAccountNull())
                 {
-                    var receiver = rawCommand.RemoveKeyword("email").Trim();
-
-                    try
-                    {
-                        receiver = db.GetEmail(receiver)!;
-                    }
-
-                    catch
-                    {
-                        Console.WriteLine($"{receiver} doesn't exist in your contacts.");
-                    }
-
-                    var emailService = new EmailService();
-
-                    if (emailService.IsAccountNull())
-                    {
-                        Console.WriteLine(Helpers.InitialEmailMessage);
-                        string email = "", password = "";
+                    Console.WriteLine(Helpers.InitialEmailMessage);
+                    string email = "", password = "";
 
 
-                        Console.Write("Your Email: ");
-                        email = Console.ReadLine()!;
+                    Console.Write("Your Email: ");
+                    email = Console.ReadLine()!;
 
 
-                        Console.Write("Password: ");
-                        password = Console.ReadLine()!;
+                    Console.Write("Password: ");
+                    password = Console.ReadLine()!;
 
-                        try
-                        {
-                            emailService.SetEmailConfig(email, password);
-                        }
-
-                        catch (FormatException)
-                        {
-                            Console.WriteLine("Please enter a valid email.");
-                        }
-                    }
-
-                    Console.Write("Subject: ");
-                    string subject = Console.ReadLine()!;
-
-                    Console.Write("Email Body: ");
-                    string body = Console.ReadLine()!;
-
-                    emailService.SendEmail(receiver, subject, body);
-                    Console.WriteLine(Helpers.EmailSuccessMessage);
+                    emailService.SetEmailConfig(email, password);
                 }
 
-                catch (FormatException)
-                {
-                    Console.WriteLine(Helpers.EmailFormatErrorMessage);
-                }
+                Console.Write("Subject: ");
+                string subject = Console.ReadLine()!;
+
+                Console.Write("Email Body: ");
+                string body = Console.ReadLine()!;
+
+                emailService.SendEmail(receiver!, subject, body);
+                Console.WriteLine(Helpers.EmailSuccessMessage);
             }
 
             else
@@ -172,5 +119,18 @@ public static class UserInput
         }
 
         context.Dispose();
+    }
+
+    private static bool GetBoolInput()
+    {
+        var option = Console.ReadLine()!;
+
+        while (string.IsNullOrEmpty(option) || !bool.TryParse(option, out _))
+        {
+            Console.WriteLine("Please type either True or False.");
+            option = Console.ReadLine()!;
+        }
+
+        return bool.Parse(option);
     }
 }

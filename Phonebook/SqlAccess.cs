@@ -119,27 +119,40 @@ public class SqlAccess
 
     public void Delete(string contactProperty)
     {
-        var (isNumber, relativeId) = Validation.IsNumber(contactProperty);
-
-        Contact contact;
-
-        if (isNumber)
+        try
         {
-            contact = _db.Contacts
-                .OrderBy(c => c.Name).ToList()[(int)relativeId - 1];
+            var (isNumber, relativeId) = Validation.IsNumber(contactProperty);
+
+            Contact contact;
+
+            if (isNumber)
+            {
+                contact = _db.Contacts
+                    .OrderBy(c => c.Name).ToList()[(int)relativeId - 1];
+            }
+
+            else
+            {
+                contact = _db.Contacts
+                    .OrderBy(c => c.Name).First(c => c.Name == contactProperty);
+            }
+
+            _db.Remove(contact);
+
+            _db.SaveChanges();
+
+            Console.WriteLine($"Successfully removed {contact.Name}!");
         }
 
-        else
+        catch (Exception ex)
         {
-            contact = _db.Contacts
-                .OrderBy(c => c.Name).First(c => c.Name == contactProperty);
+            if (ex.GetType() == typeof(InvalidOperationException))
+            {
+                Console.WriteLine(Helpers.InvalidOperationErrorMessage, contactProperty);
+            }
+
+            else Console.WriteLine(Helpers.DeleteErrorMessage);
         }
-
-        _db.Remove(contact);
-
-        _db.SaveChanges();
-
-        Console.WriteLine($"Successfully removed {contact.Name}!");
     }
 
     public List<Contact> Search(string searchTerm)
@@ -177,6 +190,14 @@ public class SqlAccess
         _db.Contacts.OrderBy(contact => contact.Name).ToList()
             .FindIndex(contact => contact.Name == name) + 1;
 
-    public string GetEmail(string name) => _db.Contacts
-        .First(contact => contact.Name == name).Email!;
+    public string? GetEmail(string name)
+    {
+        if (!_db.Contacts.Any(contact => contact.Name == name))
+        {
+            Console.WriteLine($"{name} doesn't exist in your contacts.");
+            return null;
+        }
+        
+        return _db.Contacts.First(contact => contact.Name == name).Email!;
+    }
 }

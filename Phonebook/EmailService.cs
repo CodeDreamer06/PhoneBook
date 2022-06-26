@@ -28,7 +28,11 @@ internal class EmailService
     {
         if (Validation.IsEmailValid(email!)) _userName = email;
 
-        else throw new FormatException();
+        else
+        {
+            Console.WriteLine("Please enter a valid email.");
+            return;
+        }
 
         _password = password;
 
